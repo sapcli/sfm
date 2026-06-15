@@ -1,0 +1,47 @@
+package user
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+	launchpad "github.com/sapcli/me"
+	sapme "github.com/sapcli/me/cmd/sapme/internal"
+)
+
+var (
+	searchKeyword string
+	searchField   string
+	searchCustomerID string
+)
+
+func init() {
+	Cmd.AddCommand(searchCmd)
+	searchCmd.Flags().StringVar(&searchKeyword, "keyword", "", "search keyword (required)")
+	searchCmd.Flags().StringVar(&searchField, "field", "Ipadr", "search field")
+	searchCmd.Flags().StringVar(&searchCustomerID, "customer-id", "", "customer ID")
+	_ = searchCmd.MarkFlagRequired("keyword")
+}
+
+var searchCmd = &cobra.Command{
+	Use:   "search",
+	Short: "Search users by keyword",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client := sapme.MustClient()
+		results, err := client.UserAdmin().Search(cmd.Context(), searchKeyword, launchpad.SearchOption{
+			Field:      searchField,
+			CustomerID: searchCustomerID,
+		})
+		if err != nil {
+			return err
+		}
+		sapme.Print(map[string]any{"count": len(results), "results": results})
+		return nil
+	},
+}
+
+func searchCmdE(cmd *cobra.Command, args []string) error {
+	if searchKeyword == "" {
+		return fmt.Errorf("--keyword is required")
+	}
+	return nil
+}
