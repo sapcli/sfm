@@ -35,7 +35,7 @@ var requestsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		sapme.Print(map[string]any{"count": len(results), "results": results})
+		sapme.Print(results)
 		return nil
 	},
 }
