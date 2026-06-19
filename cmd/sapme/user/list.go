@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/spf13/cobra"
-	sapme "github.com/sapcli/me/cmd/sapme/internal"
+	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
 )
 
 func init() {

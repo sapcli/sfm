@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	launchpad "github.com/sapcli/me"
+	sfm "github.com/sapcli/sfm"
 )
 
 var (
@@ -21,9 +21,9 @@ var (
 	OutputFormat *string
 )
 
-func MustClient() *launchpad.Client {
-	var opts []launchpad.ClientOption
-	opts = append(opts, launchpad.WithTimeout(*Timeout), launchpad.WithHTTPDebugBodyMax(*DebugBodyMax))
+func MustClient() *sfm.Client {
+	var opts []sfm.ClientOption
+	opts = append(opts, sfm.WithTimeout(*Timeout), sfm.WithHTTPDebugBodyMax(*DebugBodyMax))
 	if strings.TrimSpace(*HTTPLogLevel) != "" {
 		level, err := ParseLogLevel(*HTTPLogLevel)
 		if err != nil {
@@ -31,9 +31,9 @@ func MustClient() *launchpad.Client {
 			os.Exit(1)
 		}
 		logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
-		opts = append(opts, launchpad.WithLogger(logger), launchpad.WithHTTPLogLevel(level))
+		opts = append(opts, sfm.WithLogger(logger), sfm.WithHTTPLogLevel(level))
 	}
-	client, err := launchpad.NewClient(*Username, *Password, opts...)
+	client, err := sfm.NewClient(*Username, *Password, opts...)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)

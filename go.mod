@@ -1,4 +1,4 @@
-module github.com/sapcli/me
+module github.com/sapcli/sfm
 
 go 1.26
 

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	sapme "github.com/sapcli/me/cmd/sapme/internal"
-	"github.com/sapcli/me/cmd/sapme/user"
-	"github.com/sapcli/me/cmd/sapme/partneruser"
+	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
+	"github.com/sapcli/sfm/cmd/sapme/user"
+	"github.com/sapcli/sfm/cmd/sapme/partneruser"
 )
 
 var (
@@ -21,8 +21,8 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:           "sapme",
-	Short:         "SAP Me CLI - Manage users and partner users",
+	Use:           "sfm",
+	Short:         "SAP For Me CLI - Manage users and partner users",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {

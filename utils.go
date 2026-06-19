@@ -1,4 +1,4 @@
-package launchpad
+package sfm
 
 import (
 	"encoding/json"

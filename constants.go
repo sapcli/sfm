@@ -1,4 +1,4 @@
-package launchpad
+package sfm
 
 const (
 	URLLaunchpad        = "https://launchpad.support.sap.com"

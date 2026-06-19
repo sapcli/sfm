@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	launchpad "github.com/sapcli/me"
-	sapme "github.com/sapcli/me/cmd/sapme/internal"
+	sfm "github.com/sapcli/sfm"
+	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
 )
 
 var (
@@ -38,7 +38,7 @@ var createCmd = &cobra.Command{
 			return fmt.Errorf("--email is required")
 		}
 		client := sapme.MustClient()
-		user, err := client.UserAdmin().Create(cmd.Context(), launchpad.CreateUserRequest{
+		user, err := client.UserAdmin().Create(cmd.Context(), sfm.CreateUserRequest{
 			Email:        createEmail,
 			FirstName:    createFirstName,
 			LastName:     createLastName,

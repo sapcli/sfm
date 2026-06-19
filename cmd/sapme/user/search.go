@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	launchpad "github.com/sapcli/me"
-	sapme "github.com/sapcli/me/cmd/sapme/internal"
+	sfm "github.com/sapcli/sfm"
+	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
 )
 
 var (
@@ -27,7 +27,7 @@ var searchCmd = &cobra.Command{
 	Short: "Search users by keyword",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := sapme.MustClient()
-		results, err := client.UserAdmin().Search(cmd.Context(), searchKeyword, launchpad.SearchOption{
+		results, err := client.UserAdmin().Search(cmd.Context(), searchKeyword, sfm.SearchOption{
 			Field:      searchField,
 			CustomerID: searchCustomerID,
 		})

@@ -1,4 +1,4 @@
-package launchpad
+package sfm
 
 type User struct {
 	Susid        string `json:"Susid"`

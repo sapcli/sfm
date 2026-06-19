@@ -2,8 +2,8 @@ package user
 
 import (
 	"github.com/spf13/cobra"
-	launchpad "github.com/sapcli/me"
-	sapme "github.com/sapcli/me/cmd/sapme/internal"
+	sfm "github.com/sapcli/sfm"
+	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
 )
 
 var (
@@ -26,7 +26,7 @@ var requestsCmd = &cobra.Command{
 	Short: "List user requests",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := sapme.MustClient()
-		results, err := client.UserAdmin().GetUserRequests(cmd.Context(), launchpad.RequestFilter{
+		results, err := client.UserAdmin().GetUserRequests(cmd.Context(), sfm.RequestFilter{
 			Status:    requestsStatus,
 			Type:      requestsType,
 			Requester: requestsRequester,

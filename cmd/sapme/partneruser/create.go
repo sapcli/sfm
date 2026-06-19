@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	launchpad "github.com/sapcli/me"
-	sapme "github.com/sapcli/me/cmd/sapme/internal"
+	sfm "github.com/sapcli/sfm"
+	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
 )
 
 var (
@@ -39,7 +39,7 @@ var createCmd = &cobra.Command{
 		if err := client.Partner().Auth(cmd.Context()); err != nil {
 			return err
 		}
-		user, err := client.Partner().Create(cmd.Context(), launchpad.CreatePartnerUserRequest{
+		user, err := client.Partner().Create(cmd.Context(), sfm.CreatePartnerUserRequest{
 			Email:          createEmail,
 			FirstName:      createFirstName,
 			LastName:       createLastName,
