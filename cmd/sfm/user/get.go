@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
+	sapme "github.com/sapcli/sfm/cmd/sfm/internal"
 )
 
 var getUserID string

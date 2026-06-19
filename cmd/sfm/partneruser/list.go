@@ -1,8 +1,8 @@
-package user
+package partneruser
 
 import (
 	"github.com/spf13/cobra"
-	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
+	sapme "github.com/sapcli/sfm/cmd/sfm/internal"
 )
 
 func init() {
@@ -11,14 +11,17 @@ func init() {
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all users",
+	Short: "List all partner users",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := sapme.MustClient()
-		results, err := client.UserAdmin().Users(cmd.Context())
+		if err := client.Partner().Auth(cmd.Context()); err != nil {
+			return err
+		}
+		results, err := client.Partner().Users(cmd.Context())
 		if err != nil {
 			return err
 		}
-		sapme.Print(map[string]any{"count": len(results), "results": results})
+		sapme.Print(results)
 		return nil
 	},
 }

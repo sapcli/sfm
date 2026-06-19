@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"reflect"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -64,13 +65,71 @@ func printText(v any) {
 		for k, v := range val {
 			fmt.Printf("%s: %v\n", k, v)
 		}
-	case []any:
-		for i, item := range val {
-			fmt.Printf("[%d] %v\n", i, item)
+	default:
+		if slice := toSliceAny(v); slice != nil {
+			printTextRows(slice)
+		} else {
+			fmt.Printf("%v\n", v)
+		}
+	}
+}
+
+func printTextRows(rows []any) {
+	if len(rows) == 0 {
+		return
+	}
+
+	mapped := make([]any, len(rows))
+	for i, r := range rows {
+		if m := structToMap(r); m != nil {
+			mapped[i] = m
+		} else {
+			mapped[i] = r
+		}
+	}
+
+	first := mapped[0]
+	switch row := first.(type) {
+	case map[string]any:
+		headers := make([]string, 0, len(row))
+		for k := range row {
+			headers = append(headers, k)
+		}
+		for i, h := range headers {
+			if i > 0 {
+				fmt.Print(",")
+			}
+			fmt.Print(strings.ToUpper(h))
+		}
+		fmt.Println()
+
+		for _, r := range mapped {
+			m, ok := r.(map[string]any)
+			if !ok {
+				continue
+			}
+			for i, h := range headers {
+				if i > 0 {
+					fmt.Print(",")
+				}
+				fmt.Print(csvCell(m[h]))
+			}
+			fmt.Println()
 		}
 	default:
-		fmt.Printf("%v\n", v)
+		for _, r := range mapped {
+			fmt.Printf("%v\n", r)
+		}
 	}
+}
+
+func csvCell(v any) string {
+	s := fmt.Sprintf("%v", v)
+	if strings.ContainsAny(s, ",\"\n") {
+		s = strings.ReplaceAll(s, "\"", "\"\"")
+		s = `"` + s + `"`
+	}
+	return s
 }
 
 func printTable(v any) {
@@ -84,8 +143,25 @@ func printTable(v any) {
 	case []any:
 		printTableRows(val)
 	default:
-		printText(v)
+		if slice := toSliceAny(v); slice != nil {
+			printTableRows(slice)
+		} else {
+			printText(v)
+		}
 	}
+}
+
+func toSliceAny(v any) []any {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() != reflect.Slice {
+		return nil
+	}
+	n := rv.Len()
+	out := make([]any, n)
+	for i := range n {
+		out[i] = rv.Index(i).Interface()
+	}
+	return out
 }
 
 func printTableRows(rows []any) {
@@ -93,9 +169,18 @@ func printTableRows(rows []any) {
 		return
 	}
 
+	mapped := make([]any, len(rows))
+	for i, r := range rows {
+		if m := structToMap(r); m != nil {
+			mapped[i] = m
+		} else {
+			mapped[i] = r
+		}
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	first := rows[0]
+	first := mapped[0]
 	switch row := first.(type) {
 	case map[string]any:
 		headers := make([]string, 0, len(row))
@@ -110,7 +195,7 @@ func printTableRows(rows []any) {
 		}
 		fmt.Fprintln(w)
 
-		for _, r := range rows {
+		for _, r := range mapped {
 			m, ok := r.(map[string]any)
 			if !ok {
 				continue
@@ -124,11 +209,45 @@ func printTableRows(rows []any) {
 			fmt.Fprintln(w)
 		}
 	default:
-		for _, r := range rows {
+		for _, r := range mapped {
 			fmt.Fprintf(w, "%v\n", r)
 		}
 	}
 	w.Flush()
+}
+
+func structToMap(v any) map[string]any {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil
+		}
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return nil
+	}
+
+	m := make(map[string]any, rv.NumField())
+	t := rv.Type()
+	for i := range rv.NumField() {
+		ft := t.Field(i)
+		if !ft.IsExported() {
+			continue
+		}
+		name := ft.Name
+		if tag, ok := ft.Tag.Lookup("json"); ok {
+			if tag == "-" {
+				continue
+			}
+			if idx := strings.Index(tag, ","); idx != -1 {
+				tag = tag[:idx]
+			}
+			name = tag
+		}
+		m[name] = rv.Field(i).Interface()
+	}
+	return m
 }
 
 func ParseLogLevel(raw string) (slog.Level, error) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	sfm "github.com/sapcli/sfm"
-	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
+	sapme "github.com/sapcli/sfm/cmd/sfm/internal"
 )
 
 var (

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
+	sapme "github.com/sapcli/sfm/cmd/sfm/internal"
 )
 
 var searchEmail string
@@ -30,7 +30,7 @@ var searchCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		sapme.Print(map[string]any{"count": len(results), "results": results})
+		sapme.Print(results)
 		return nil
 	},
 }

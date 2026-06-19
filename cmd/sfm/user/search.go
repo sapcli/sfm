@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	sfm "github.com/sapcli/sfm"
-	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
+	sapme "github.com/sapcli/sfm/cmd/sfm/internal"
 )
 
 var (
@@ -34,7 +34,7 @@ var searchCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		sapme.Print(map[string]any{"count": len(results), "results": results})
+		sapme.Print(results)
 		return nil
 	},
 }

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	sapme "github.com/sapcli/sfm/cmd/sapme/internal"
-	"github.com/sapcli/sfm/cmd/sapme/user"
-	"github.com/sapcli/sfm/cmd/sapme/partneruser"
+	sapme "github.com/sapcli/sfm/cmd/sfm/internal"
+	"github.com/sapcli/sfm/cmd/sfm/user"
+	"github.com/sapcli/sfm/cmd/sfm/partneruser"
 )
 
 var (
