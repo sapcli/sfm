@@ -5,22 +5,22 @@
 **sfm** — CLI for managing SAP for Me (SAP launchpad) users. Go 1.26, cobra.
 
 Module: `github.com/sapcli/sfm`
-Binary: `sfm` (entrypoint at `cmd/sapme/main.go`)
+Binary: `sfm` (entrypoint at `cmd/sfm/main.go`)
 
 ## Directory structure
 
 ```
 .               sfm/       — library package (HTTP client, SSO auth, UserAdmin, PartnerUser APIs)
-cmd/sapme/      main       — CLI entrypoint (legacy dir name, keep it as-is)
-cmd/sapme/internal/ — shared CLI helpers (MustClient, Print)
-cmd/sapme/user/ — `user` subcommand
-cmd/sapme/partneruser/ — `partneruser` subcommand
+cmd/sfm/        main       — CLI entrypoint
+cmd/sfm/internal/ — shared CLI helpers (MustClient, Print)
+cmd/sfm/user/ — `user` subcommand
+cmd/sfm/partneruser/ — `partneruser` subcommand
 ```
 
 ## Commands
 
 ```sh
-go build -o sfm ./cmd/sapme          # build binary
+go build -o sfm ./cmd/sfm              # build binary
 go build ./...                        # verify compilation
 go vet ./...                          # vet
 go test -race ./...                   # full test suite
@@ -40,7 +40,7 @@ These are set via `PersistentPreRunE` in the root cobra command, checked as fall
 ## Architecture
 
 - **Root package `sfm`** is the library: `Client` (functional options), `SSO` (SAML/Gigya auth flow), `UserAdmin` (OData CRUD via launchpad.support.sap.com), `PartnerUser` (OData CRUD via partnermanagemyusers.cfapps...).
-- **`cmd/sapme/`** is the CLI crust. `MustClient()` constructs an authenticated client; `Print()` formats output (json/text/table). Both read global pointer vars set by cobra's `init()`.
+- **`cmd/sfm/`** is the CLI crust. `MustClient()` constructs an authenticated client; `Print()` formats output (json/text/table). Both read global pointer vars set by cobra's `init()`.
 - **Auth path**: SID + password → SAML redirect chain → optional Gigya/CDC flow → cookie-based session. The SSO code parses HTML forms and follows redirects.
 - **Error handling**: Custom `*sfm.Error` type with `Kind` (ErrClient, ErrHTTP, ErrParse, ErrInvalidSID, ErrPartnerLocked), `Status`, `URL`. Use `errors.As` to unwrap.
 
@@ -53,7 +53,6 @@ These are set via `PersistentPreRunE` in the root cobra command, checked as fall
 
 ## Gotchas
 
-- **The `cmd/sapme/` directory name is a legacy artifact** from the project rename (was `me` → `sfm`). Do NOT rename it — it would break import paths across the project.
 - **SID validation**: Username is validated against regex `^[sS]\d+$` — must look like `S123...`.
 - **Partner flow** requires a separate auth step (`client.Partner().Auth(ctx)`) after login.
 - **CSRF tokens**: Both `UserAdmin` and `PartnerUser` cache CSRF tokens in memory and re-login on 401 / login-required headers.
