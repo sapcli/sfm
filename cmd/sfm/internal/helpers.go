@@ -53,6 +53,18 @@ func Print(v any) {
 	}
 }
 
+// ValidateOutputFormat returns an error if format is not supported.
+var ValidOutputFormats = []string{"json", "text", "table"}
+
+func ValidateOutputFormat(format string) error {
+	for _, f := range ValidOutputFormats {
+		if f == format {
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid output format %q (expected %s)", format, strings.Join(ValidOutputFormats, "|"))
+}
+
 func printJSON(v any) {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
@@ -66,8 +78,8 @@ func printText(v any) {
 			fmt.Printf("%s: %v\n", k, v)
 		}
 	default:
-		if slice := toSliceAny(v); slice != nil {
-			printTextRows(slice)
+		if rows := toRows(v); rows != nil {
+			printTextRows(rows)
 		} else {
 			fmt.Printf("%v\n", v)
 		}
@@ -140,15 +152,23 @@ func printTable(v any) {
 		} else {
 			printText(v)
 		}
-	case []any:
-		printTableRows(val)
 	default:
-		if slice := toSliceAny(v); slice != nil {
-			printTableRows(slice)
+		if rows := toRows(v); rows != nil {
+			printTableRows(rows)
 		} else {
 			printText(v)
 		}
 	}
+}
+
+func toRows(v any) []any {
+	if rows := toSliceAny(v); rows != nil {
+		return rows
+	}
+	if m := structToMap(v); m != nil {
+		return []any{m}
+	}
+	return nil
 }
 
 func toSliceAny(v any) []any {

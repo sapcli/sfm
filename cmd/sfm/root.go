@@ -26,20 +26,34 @@ var rootCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if username == "" {
-			username = os.Getenv("SAP_ADMIN_USERNAME")
+		if err := sapme.ValidateOutputFormat(outputFormat); err != nil {
+			return err
 		}
-		if password == "" {
-			password = os.Getenv("SAP_ADMIN_PASSWORD")
-		}
-		if httpLogLevel == "" {
-			httpLogLevel = os.Getenv("HTTP_LOG_LEVEL")
-		}
-		if username == "" || password == "" {
-			return fmt.Errorf("username/password required (flags or env SAP_ADMIN_USERNAME/SAP_ADMIN_PASSWORD)")
+		if needsAuth(cmd) {
+			if username == "" {
+				username = os.Getenv("SAP_ADMIN_USERNAME")
+			}
+			if password == "" {
+				password = os.Getenv("SAP_ADMIN_PASSWORD")
+			}
+			if httpLogLevel == "" {
+				httpLogLevel = os.Getenv("HTTP_LOG_LEVEL")
+			}
+			if username == "" || password == "" {
+				return fmt.Errorf("username/password required (flags or env SAP_ADMIN_USERNAME/SAP_ADMIN_PASSWORD)")
+			}
 		}
 		return nil
 	},
+}
+
+func needsAuth(cmd *cobra.Command) bool {
+	for c := cmd; c != nil; c = c.Parent() {
+		if c.Name() == "help" || c.Name() == "completion" {
+			return false
+		}
+	}
+	return true
 }
 
 func init() {
@@ -56,6 +70,10 @@ func init() {
 	sapme.HTTPLogLevel = &httpLogLevel
 	sapme.DebugBodyMax = &debugBodyMax
 	sapme.OutputFormat = &outputFormat
+
+	_ = rootCmd.RegisterFlagCompletionFunc("output", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return sapme.ValidOutputFormats, cobra.ShellCompDirectiveDefault
+	})
 
 	rootCmd.AddCommand(
 		user.Cmd,
