@@ -91,6 +91,9 @@ func printTextRows(rows []any) {
 		return
 	}
 
+	// Extract headers in declaration order from original struct type.
+	headers := structFieldNames(rows[0])
+
 	mapped := make([]any, len(rows))
 	for i, r := range rows {
 		if m := structToMap(r); m != nil {
@@ -100,38 +103,39 @@ func printTextRows(rows []any) {
 		}
 	}
 
-	first := mapped[0]
-	switch row := first.(type) {
-	case map[string]any:
-		headers := make([]string, 0, len(row))
-		for k := range row {
-			headers = append(headers, k)
+	// Fall back to map key iteration for non-struct types.
+	if headers == nil {
+		if first, ok := mapped[0].(map[string]any); ok {
+			for k := range first {
+				headers = append(headers, k)
+			}
+		}
+	}
+
+	if len(headers) == 0 {
+		return
+	}
+
+	for i, h := range headers {
+		if i > 0 {
+			fmt.Print(",")
+		}
+		fmt.Print(strings.ToUpper(h))
+	}
+	fmt.Println()
+
+	for _, r := range mapped {
+		m, ok := r.(map[string]any)
+		if !ok {
+			continue
 		}
 		for i, h := range headers {
 			if i > 0 {
 				fmt.Print(",")
 			}
-			fmt.Print(strings.ToUpper(h))
+			fmt.Print(csvCell(m[h]))
 		}
 		fmt.Println()
-
-		for _, r := range mapped {
-			m, ok := r.(map[string]any)
-			if !ok {
-				continue
-			}
-			for i, h := range headers {
-				if i > 0 {
-					fmt.Print(",")
-				}
-				fmt.Print(csvCell(m[h]))
-			}
-			fmt.Println()
-		}
-	default:
-		for _, r := range mapped {
-			fmt.Printf("%v\n", r)
-		}
 	}
 }
 
@@ -165,15 +169,17 @@ func toRows(v any) []any {
 	if rows := toSliceAny(v); rows != nil {
 		return rows
 	}
-	if m := structToMap(v); m != nil {
-		return []any{m}
+	// Pass the original struct so printTextRows/printTableRows can
+	// extract ordered field names via structFieldNames before conversion.
+	if structToMap(v) != nil {
+		return []any{v}
 	}
 	return nil
 }
 
 func toSliceAny(v any) []any {
 	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Slice {
+	if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
 		return nil
 	}
 	n := rv.Len()
@@ -189,6 +195,9 @@ func printTableRows(rows []any) {
 		return
 	}
 
+	// Extract headers in declaration order from original struct type.
+	headers := structFieldNames(rows[0])
+
 	mapped := make([]any, len(rows))
 	for i, r := range rows {
 		if m := structToMap(r); m != nil {
@@ -198,40 +207,41 @@ func printTableRows(rows []any) {
 		}
 	}
 
+	// Fall back to map key iteration for non-struct types.
+	if headers == nil {
+		if first, ok := mapped[0].(map[string]any); ok {
+			for k := range first {
+				headers = append(headers, k)
+			}
+		}
+	}
+
+	if len(headers) == 0 {
+		return
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	first := mapped[0]
-	switch row := first.(type) {
-	case map[string]any:
-		headers := make([]string, 0, len(row))
-		for k := range row {
-			headers = append(headers, k)
+	for i, h := range headers {
+		if i > 0 {
+			fmt.Fprint(w, "\t")
+		}
+		fmt.Fprint(w, strings.ToUpper(h))
+	}
+	fmt.Fprintln(w)
+
+	for _, r := range mapped {
+		m, ok := r.(map[string]any)
+		if !ok {
+			continue
 		}
 		for i, h := range headers {
 			if i > 0 {
 				fmt.Fprint(w, "\t")
 			}
-			fmt.Fprint(w, strings.ToUpper(h))
+			fmt.Fprint(w, m[h])
 		}
 		fmt.Fprintln(w)
-
-		for _, r := range mapped {
-			m, ok := r.(map[string]any)
-			if !ok {
-				continue
-			}
-			for i, h := range headers {
-				if i > 0 {
-					fmt.Fprint(w, "\t")
-				}
-				fmt.Fprint(w, m[h])
-			}
-			fmt.Fprintln(w)
-		}
-	default:
-		for _, r := range mapped {
-			fmt.Fprintf(w, "%v\n", r)
-		}
 	}
 	w.Flush()
 }
@@ -268,6 +278,44 @@ func structToMap(v any) map[string]any {
 		m[name] = rv.Field(i).Interface()
 	}
 	return m
+}
+
+// structFieldNames returns exported field names (with json tag support)
+// in declaration order, or nil if v is not a struct or pointer to struct.
+func structFieldNames(v any) []string {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil
+		}
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return nil
+	}
+
+	t := rv.Type()
+	names := make([]string, 0, t.NumField())
+	for i := range t.NumField() {
+		ft := t.Field(i)
+		if !ft.IsExported() {
+			continue
+		}
+		name := ft.Name
+		if tag, ok := ft.Tag.Lookup("json"); ok {
+			if tag == "-" {
+				continue
+			}
+			if idx := strings.Index(tag, ","); idx != -1 {
+				tag = tag[:idx]
+			}
+			if tag != "" {
+				name = tag
+			}
+		}
+		names = append(names, name)
+	}
+	return names
 }
 
 func ParseLogLevel(raw string) (slog.Level, error) {
