@@ -23,10 +23,6 @@ var deleteCmd = &cobra.Command{
 			return fmt.Errorf("--user-id is required")
 		}
 		client := sapme.MustClient()
-		if err := client.UserAdmin().Delete(cmd.Context(), deleteUserID); err != nil {
-			return err
-		}
-		sapme.Print(map[string]any{"ok": true, "message": "user deleted"})
-		return nil
+		return client.UserAdmin().Delete(cmd.Context(), deleteUserID)
 	},
 }

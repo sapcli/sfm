@@ -26,11 +26,7 @@ var deleteCmd = &cobra.Command{
 		if err := client.Partner().Auth(cmd.Context()); err != nil {
 			return err
 		}
-		found, err := client.Partner().DeleteByEmail(cmd.Context(), deleteEmail)
-		if err != nil {
-			return err
-		}
-		sapme.Print(map[string]any{"found": found, "message": "partner user deleted"})
-		return nil
+		_, err := client.Partner().DeleteByEmail(cmd.Context(), deleteEmail)
+		return err
 	},
 }
