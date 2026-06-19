@@ -1,6 +1,6 @@
 # Compiled binaries
 sapme
-sfm
+/sfm
 
 # Go
 *.exe
