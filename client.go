@@ -1,3 +1,9 @@
+// Package sfm implements an HTTP client for SAP For Me (SAP launchpad) administration.
+//
+// It provides SSO/SAML authentication, OData CRUD operations for user and
+// partner-user management, cookie-based session persistence, and batch
+// request support. Use NewClient to construct a Client, then call Login
+// before accessing UserAdmin or Partner endpoints.
 package sfm
 
 import (
