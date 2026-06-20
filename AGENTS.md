@@ -10,10 +10,11 @@ Binary: `sfm` (entrypoint at `cmd/sfm/main.go`)
 ## Directory structure
 
 ```
-.               sfm/       — library package (HTTP client, SSO auth, UserAdmin, PartnerUser APIs)
-cmd/sfm/        main       — CLI entrypoint
-cmd/sfm/internal/ — shared CLI helpers (MustClient, Print)
-cmd/sfm/user/ — `user` subcommand
+.                   — library package (client.go, sso.go, useradmin.go, partner.go, cookies.go, etc.)
+cmd/sfm/            main.go        — CLI entrypoint
+cmd/sfm/internal/   config.go      — shared CLI helpers (Config, MustClient, Print)
+cmd/sfm/config/     config.go      — `config` subcommand (set/get/unset)
+cmd/sfm/user/       — `user` subcommand
 cmd/sfm/partneruser/ — `partneruser` subcommand
 ```
 
@@ -31,11 +32,21 @@ CI runs: `build → vet → test -race`
 
 ## Environment
 
-- `SAP_ADMIN_USERNAME` — S-User ID (starts with `S` + digits, e.g. `S1234567890`)
-- `SAP_ADMIN_PASSWORD` — corresponding password
-- `HTTP_LOG_LEVEL` — `debug|info|warn|error`
+| Variable / Flag | Description |
+|---|---|
+| `SAP_ADMIN_USERNAME` / `--username` | S-User ID (starts with `S` + digits, e.g. `S1234567890`) |
+| `SAP_ADMIN_PASSWORD` / `--password` | Corresponding password |
+| `HTTP_LOG_LEVEL` / `--http-log-level` | `debug\|info\|warn\|error` |
+| `--timeout` | Request timeout (default `1m30s`) |
+| `--debug-body-max` | Max body bytes to log (default `2048`) |
+| `-o` / `--output` | Output format: `json\|text\|table` (default `json`) |
 
-These are set via `PersistentPreRunE` in the root cobra command, checked as fallback after flags.
+Credentials are resolved in order (highest precedence first):
+1. `--username` / `--password` CLI flags
+2. `SAP_ADMIN_USERNAME` / `SAP_ADMIN_PASSWORD` env vars
+3. Config file (saved via `sfm config set`)
+
+The three sources are combined in `PersistentPreRunE` in the root cobra command. If flags are empty, env vars are checked; if both are empty, the config file is read.
 
 ## Architecture
 
@@ -57,7 +68,6 @@ These are set via `PersistentPreRunE` in the root cobra command, checked as fall
 - **Partner flow** requires a separate auth step (`client.Partner().Auth(ctx)`) after login.
 - **CSRF tokens**: Both `UserAdmin` and `PartnerUser` cache CSRF tokens in memory and re-login on 401 / login-required headers.
 - **No linter config** in the repo. Run `go vet` and `gofmt` manually. CI only runs `go vet`.
-- **No README** — don't look for one.
 - **Compiled binaries** (`sfm`, `sapme`) are gitignored.
 
 ## History

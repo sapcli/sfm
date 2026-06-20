@@ -30,21 +30,21 @@ sfm user list
 sfm user get --user-id U123456
 
 # Search users
-sfm user search --query "john@example.com"
+sfm user search --keyword "john@example.com"
 
 # Create a user
-sfm user create --email "user@example.com" --first "John" --last "Doe" \
-  --customer C123 --department D456
+sfm user create --email "user@example.com" --first-name "John" --last-name "Doe" \
+  --customer-id C123 --department-id D456
 
 # Extend user expiry
-sfm user extend --user-id U123456 --days 90
+sfm user extend --user-ids U123456 --days 90
 ```
 
 ## Commands
 
 | Command | Description |
 |---|---|
-| `sfm user` | Manage SAP For Me users (list, get, create, delete, extend, search) |
+| `sfm user` | Manage SAP For Me users (list, get, create, delete, extend, search, requests) |
 | `sfm partneruser` | Manage SAP partner users (list, create, delete, search) |
 | `sfm config` | Persist credentials to config file (set, get, unset) |
 
@@ -94,9 +94,12 @@ sfm user get --user-id U123456 --output text
 
 | Variable | Description |
 |---|---|
-| `SAP_ADMIN_USERNAME` | S-User ID (starts with `S` + digits) |
-| `SAP_ADMIN_PASSWORD` | Corresponding password |
-| `HTTP_LOG_LEVEL` | HTTP debug logging level: `debug` \| `info` \| `warn` \| `error` |
+| `SAP_ADMIN_USERNAME` / `--username` | S-User ID (starts with `S` + digits) |
+| `SAP_ADMIN_PASSWORD` / `--password` | Corresponding password |
+| `HTTP_LOG_LEVEL` / `--http-log-level` | HTTP log level: `debug` \| `info` \| `warn` \| `error` |
+| `--timeout` | Request timeout (default `1m30s`) |
+| `--debug-body-max` | Max body bytes to log (default `2048`) |
+| `-o` / `--output` | Output format: `json` \| `text` \| `table` (default `json`) |
 
 ## Library
 
