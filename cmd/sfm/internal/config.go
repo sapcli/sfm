@@ -1,3 +1,9 @@
+// Package internal provides shared CLI helpers for the sfm command tree.
+//
+// It exposes global pointer vars set by cobra init (Username, Password, etc.),
+// MustClient for constructing an authenticated sfm.Client, Print for formatted
+// output, and config-file helpers (ReadConfig, WriteConfig) for persisting
+// credentials to the user's config directory.
 package internal
 
 import (

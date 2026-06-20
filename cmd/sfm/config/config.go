@@ -1,3 +1,5 @@
+// Package config implements the "sfm config" command tree for managing
+// persisted CLI credentials (username and password). Subcommands: set, get, unset.
 package config
 
 import (

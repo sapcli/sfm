@@ -1,3 +1,5 @@
+// Package partneruser implements the "sfm partneruser" command tree for managing
+// SAP partner users. Subcommands: list, create, delete, search.
 package partneruser
 
 import (
