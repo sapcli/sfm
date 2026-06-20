@@ -103,6 +103,12 @@ func (p *PartnerUser) Auth(ctx context.Context) error {
 		return &Error{Kind: ErrClient, Msg: "authentication failed"}
 	}
 	p.csrfToken = ""
+
+	if p.core.cookiePath != "" {
+		if err := p.core.SaveCookies(p.core.cookiePath); err != nil {
+			// non-fatal: partner cookies saved alongside session cookies
+		}
+	}
 	return nil
 }
 
