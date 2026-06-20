@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"slices"
 	"time"
 )
 
@@ -34,8 +33,15 @@ type cookieData struct {
 	SameSite http.SameSite `json:"sameSite,omitempty"`
 }
 
-type savedCookies struct {
+// entry maps a set-cookie URL to the cookies that were set for it,
+// so that loading uses the same URL (host) that was used during save.
+type entry struct {
+	URL     string       `json:"url"`
 	Cookies []cookieData `json:"cookies"`
+}
+
+type savedCookies struct {
+	Entries []entry `json:"entries"`
 }
 
 // DefaultCookiePath returns the default cookie file path for the given
@@ -45,7 +51,6 @@ func DefaultCookiePath(username string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Sanitize username for use as a filename component.
 	sanitized := username
 	if sanitized == "" {
 		sanitized = "default"
@@ -58,39 +63,31 @@ func DefaultCookiePath(username string) (string, error) {
 func (c *core) LoadCookies(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return err // includes file-not-found for callers that check
+		return err
 	}
 	var sc savedCookies
 	if err := json.Unmarshal(data, &sc); err != nil {
 		return err
 	}
-	for _, cd := range sc.Cookies {
-		ck := &http.Cookie{
-			Name:     cd.Name,
-			Value:    cd.Value,
-			Domain:   cd.Domain,
-			Path:     cd.Path,
-			Expires:  cd.Expires,
-			MaxAge:   cd.MaxAge,
-			Secure:   cd.Secure,
-			HttpOnly: cd.HttpOnly,
-			SameSite: cd.SameSite,
-		}
-		// Determine a URL for this cookie to place it in the jar.
-		// If Domain starts with ".", strip it for url.Parse.
-		domain := cd.Domain
-		if len(domain) > 0 && domain[0] == '.' {
-			domain = domain[1:]
-		}
-		scheme := "https"
-		if !cd.Secure {
-			scheme = "http"
-		}
-		cookieURL, err := url.Parse(scheme + "://" + domain + cd.Path)
+	for _, e := range sc.Entries {
+		u, err := url.Parse(e.URL)
 		if err != nil {
 			continue
 		}
-		c.jar.SetCookies(cookieURL, []*http.Cookie{ck})
+		for _, cd := range e.Cookies {
+			ck := &http.Cookie{
+				Name:     cd.Name,
+				Value:    cd.Value,
+				Domain:   cd.Domain,
+				Path:     cd.Path,
+				Expires:  cd.Expires,
+				MaxAge:   cd.MaxAge,
+				Secure:   cd.Secure,
+				HttpOnly: cd.HttpOnly,
+				SameSite: cd.SameSite,
+			}
+			c.jar.SetCookies(u, []*http.Cookie{ck})
+		}
 	}
 	return nil
 }
@@ -98,20 +95,24 @@ func (c *core) LoadCookies(path string) error {
 // SaveCookies serializes all cookies for known domains to the given file.
 func (c *core) SaveCookies(path string) error {
 	seen := map[string]bool{}
-	var all []cookieData
+	var entries []entry
 	for _, domain := range knownDomains {
 		u, err := url.Parse(domain)
 		if err != nil {
 			continue
 		}
-		for _, ck := range c.jar.Cookies(u) {
-			// Deduplicate by name+domain+path.
+		cookies := c.jar.Cookies(u)
+		if len(cookies) == 0 {
+			continue
+		}
+		var list []cookieData
+		for _, ck := range cookies {
 			key := ck.Name + "|" + ck.Domain + "|" + ck.Path
 			if seen[key] {
 				continue
 			}
 			seen[key] = true
-			all = append(all, cookieData{
+			list = append(list, cookieData{
 				Name:     ck.Name,
 				Value:    ck.Value,
 				Domain:   ck.Domain,
@@ -123,19 +124,12 @@ func (c *core) SaveCookies(path string) error {
 				SameSite: ck.SameSite,
 			})
 		}
+		if len(list) > 0 {
+			entries = append(entries, entry{URL: u.String(), Cookies: list})
+		}
 	}
-	// Sort for deterministic output.
-	slices.SortFunc(all, func(a, b cookieData) int {
-		if a.Name < b.Name {
-			return -1
-		}
-		if a.Name > b.Name {
-			return 1
-		}
-		return 0
-	})
 
-	data, err := json.MarshalIndent(savedCookies{Cookies: all}, "", "  ")
+	data, err := json.MarshalIndent(savedCookies{Entries: entries}, "", "  ")
 	if err != nil {
 		return err
 	}
