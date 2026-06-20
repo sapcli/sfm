@@ -25,6 +25,14 @@ var (
 func MustClient() *sfm.Client {
 	var opts []sfm.ClientOption
 	opts = append(opts, sfm.WithTimeout(*Timeout), sfm.WithHTTPDebugBodyMax(*DebugBodyMax))
+
+	// Enable cookie session persistence to avoid re-login on every command.
+	if *Username != "" {
+		if p, err := sfm.DefaultCookiePath(*Username); err == nil {
+			opts = append(opts, sfm.WithCookiePersistence(p))
+		}
+	}
+
 	if strings.TrimSpace(*HTTPLogLevel) != "" {
 		level, err := ParseLogLevel(*HTTPLogLevel)
 		if err != nil {
