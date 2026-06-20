@@ -44,10 +44,13 @@ type savedCookies struct {
 	Entries []entry `json:"entries"`
 }
 
-// DefaultCookiePath returns the default cookie file path for the given
-// username, scoped per user so switching S-IDs doesn't reuse stale sessions.
+// DefaultCookiePath returns the platform-appropriate cookie file path.
+//
+//	Linux:   ~/.config/sfm/cookies-{username}.json
+//	macOS:   ~/Library/Application Support/sfm/cookies-{username}.json
+//	Windows: %APPDATA%\sfm\cookies-{username}.json
 func DefaultCookiePath(username string) (string, error) {
-	home, err := os.UserHomeDir()
+	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
@@ -55,8 +58,7 @@ func DefaultCookiePath(username string) (string, error) {
 	if sanitized == "" {
 		sanitized = "default"
 	}
-	dir := filepath.Join(home, ".config", "sfm")
-	return filepath.Join(dir, "cookies-"+sanitized+".json"), nil
+	return filepath.Join(dir, "sfm", "cookies-"+sanitized+".json"), nil
 }
 
 // LoadCookies populates the core's cookie jar from the given file.

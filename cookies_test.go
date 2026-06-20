@@ -128,8 +128,8 @@ func TestDefaultCookiePath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	home, _ := os.UserHomeDir()
-	want := filepath.Join(home, ".config", "sfm", "cookies-S1234567890.json")
+	cfgDir, _ := os.UserConfigDir()
+	want := filepath.Join(cfgDir, "sfm", "cookies-S1234567890.json")
 	if p != want {
 		t.Fatalf("DefaultCookiePath = %q, want %q", p, want)
 	}
