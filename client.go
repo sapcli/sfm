@@ -27,6 +27,7 @@ type clientConfig struct {
 	DebugBodyMax  int
 	Logger        *slog.Logger
 	LogLevel      slog.Leveler
+	CookiePath    string
 }
 
 func WithRetryAttempts(v int) ClientOption {
@@ -67,6 +68,14 @@ func WithLogger(logger *slog.Logger) ClientOption {
 	}
 }
 
+// WithCookiePersistence enables saving/loading session cookies to/from disk.
+// The path is the file path for the cookie JSON file.
+func WithCookiePersistence(path string) ClientOption {
+	return func(c *clientConfig) {
+		c.CookiePath = path
+	}
+}
+
 func WithHTTPLogLevel(level slog.Leveler) ClientOption {
 	return func(c *clientConfig) {
 		c.LogLevel = level
@@ -97,7 +106,8 @@ type core struct {
 	httpLogBodyMax int
 	auth           *SSO
 
-	onLogout func()
+	cookiePath string
+	onLogout   func()
 }
 
 func NewClient(username, password string, opts ...ClientOption) (*Client, error) {
@@ -155,6 +165,8 @@ func NewClient(username, password string, opts ...ClientOption) (*Client, error)
 	co.getCredentials = func() (string, string) {
 		return c.Username, c.Password
 	}
+	co.cookiePath = cfg.CookiePath
+
 	c.useradmin = &UserAdmin{core: co}
 	c.partner = &PartnerUser{core: co, api: URLPartnerEdge + "/sap/opu/odata/sap/YMMU_SERVICE_SRV/"}
 	co.onLogout = func() {
@@ -216,8 +228,30 @@ func (c *core) Login(ctx context.Context) error {
 		c.username = u
 		c.password = p
 	}
+
+	// Try loading a persisted session cookie.
+	if c.cookiePath != "" {
+		if err := c.LoadCookies(c.cookiePath); err == nil {
+			active, err := c.Auth().IsSessionActive(ctx)
+			if err == nil && active {
+				return nil // session is still valid
+			}
+		}
+	}
+
 	c.Logout()
-	return c.Auth().Login(ctx)
+	if err := c.Auth().Login(ctx); err != nil {
+		return err
+	}
+
+	if c.cookiePath != "" {
+		if err := c.SaveCookies(c.cookiePath); err != nil {
+			if c.logger != nil && c.logger.Enabled(ctx, slog.LevelDebug) {
+				c.logger.DebugContext(ctx, "failed to save cookies", "error", err)
+			}
+		}
+	}
+	return nil
 }
 
 func (c *core) Logout() {
@@ -227,6 +261,11 @@ func (c *core) Logout() {
 	}
 	c.jar = jar
 	c.httpClient.Jar = jar
+
+	if c.cookiePath != "" {
+		_ = c.RemoveCookies(c.cookiePath)
+	}
+
 	if c.onLogout != nil {
 		c.onLogout()
 	}
