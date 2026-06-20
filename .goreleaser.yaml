@@ -28,6 +28,20 @@ checksum:
   name_template: "checksums.txt"
 snapshot:
   version_template: "{{ .Tag }}-next"
+brews:
+  - name: sfm
+    repository:
+      owner: sapcli
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    commit_author:
+      name: goreleaserbot
+      email: bot@sapcli.github.io
+    homepage: "https://github.com/sapcli/sfm"
+    description: "CLI for managing SAP For Me (SAP launchpad) users and partner users."
+    license: "MIT"
+    install: |
+      bin.install "sfm"
 changelog:
   sort: asc
   filters:
