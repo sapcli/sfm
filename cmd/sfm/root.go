@@ -7,8 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 	sapme "github.com/sapcli/sfm/cmd/sfm/internal"
-	"github.com/sapcli/sfm/cmd/sfm/user"
+	"github.com/sapcli/sfm/cmd/sfm/config"
 	"github.com/sapcli/sfm/cmd/sfm/partneruser"
+	"github.com/sapcli/sfm/cmd/sfm/user"
 )
 
 var (
@@ -39,8 +40,19 @@ var rootCmd = &cobra.Command{
 			if httpLogLevel == "" {
 				httpLogLevel = os.Getenv("HTTP_LOG_LEVEL")
 			}
+			// Fall back to config file if flags and env are empty.
 			if username == "" || password == "" {
-				return fmt.Errorf("username/password required (flags or env SAP_ADMIN_USERNAME/SAP_ADMIN_PASSWORD)")
+				if cfg, err := sapme.ReadConfig(); err == nil && cfg != nil {
+					if username == "" {
+						username = cfg.Username
+					}
+					if password == "" {
+						password = cfg.Password
+					}
+				}
+			}
+			if username == "" || password == "" {
+				return fmt.Errorf("username/password required (flags, env, or config)")
 			}
 		}
 		return nil
@@ -49,7 +61,7 @@ var rootCmd = &cobra.Command{
 
 func needsAuth(cmd *cobra.Command) bool {
 	for c := cmd; c != nil; c = c.Parent() {
-		if c.Name() == "help" || c.Name() == "completion" {
+		if c.Name() == "help" || c.Name() == "completion" || c.Name() == "config" {
 			return false
 		}
 	}
@@ -76,7 +88,8 @@ func init() {
 	})
 
 	rootCmd.AddCommand(
-		user.Cmd,
+		config.Cmd,
 		partneruser.Cmd,
+		user.Cmd,
 	)
 }
