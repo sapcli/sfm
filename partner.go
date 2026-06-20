@@ -50,16 +50,9 @@ var (
 )
 
 func (p *PartnerUser) Auth(ctx context.Context) error {
-	active, err := p.core.Auth().IsSessionActive(ctx)
-	fmt.Println(active, err)
-	if err != nil {
+	// core.Login handles cookie loading, session re-use, and re-login.
+	if err := p.core.Login(ctx); err != nil {
 		return err
-	}
-	if !active {
-		p.core.Logout()
-		if err := p.core.Login(ctx); err != nil {
-			return err
-		}
 	}
 
 	_, body, err := p.core.request(ctx, http.MethodGet, URLPartnerEdge+"/index.html", requestOptions{})
