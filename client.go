@@ -234,6 +234,7 @@ func (c *core) Login(ctx context.Context) error {
 		if err := c.LoadCookies(c.cookiePath); err == nil {
 			active, err := c.Auth().IsSessionActive(ctx)
 			if err == nil && active {
+				c.logger.DebugContext(ctx, "loaded session cookies from file, session is still active")
 				return nil // session is still valid
 			}
 		}
