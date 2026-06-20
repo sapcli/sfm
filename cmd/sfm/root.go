@@ -13,6 +13,11 @@ import (
 )
 
 var (
+	// Build-time stamped vars (injected by goreleaser / -ldflags).
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+
 	username     string
 	password     string
 	timeout      time.Duration
@@ -24,6 +29,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:           "sfm",
 	Short:         "SAP For Me CLI - Manage users and partner users",
+	Version:       version,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
