@@ -46,11 +46,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download release artifact
-        uses: dsaltares/fetch-gh-release-asset@v2
-        with:
-          repo: sapcli/sfm
-          version: tags/${{ github.ref_name }}
-          file: sfm_${{ github.ref_name }}_windows_amd64.zip
+        run: gh release download ${{ github.ref_name }} --repo sapcli/sfm --pattern "sfm_${{ github.ref_name }}_windows_amd64.zip"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare package files
         run: |
