@@ -45,58 +45,59 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download release artifacts
+      - name: Download release artifact
         uses: dsaltares/fetch-gh-release-asset@v2
         with:
           repo: sapcli/sfm
           version: tags/${{ github.ref_name }}
           file: sfm_${{ github.ref_name }}_windows_amd64.zip
 
-      - name: Build and push Chocolatey package
+      - name: Prepare package files
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          cat > sfm.nuspec << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+            <metadata>
+              <id>sfm</id>
+              <version>__VERSION__</version>
+              <title>SFM - SAP For Me CLI</title>
+              <authors>sapcli</authors>
+              <owners>SAPCLI</owners>
+              <projectUrl>https://github.com/sapcli/sfm</projectUrl>
+              <projectSourceUrl>https://github.com/sapcli/sfm</projectSourceUrl>
+              <docsUrl>https://github.com/sapcli/sfm/blob/main/README.md</docsUrl>
+              <bugTrackerUrl>https://github.com/sapcli/sfm/issues</bugTrackerUrl>
+              <copyright>SAPCLI</copyright>
+              <licenseUrl>https://github.com/sapcli/sfm/blob/main/LICENSE</licenseUrl>
+              <tags>sap cli launchpad users partner</tags>
+              <summary>CLI for managing SAP For Me (SAP launchpad) users and partner users.</summary>
+              <description><![CDATA[
+          SAP For Me CLI - Manage SAP launchpad users and partner users.
+          Supports user listing, creation, deletion, expiry extension, and search.
+          ]]></description>
+              <releaseNotes>https://github.com/sapcli/sfm/releases/tag/__VERSION__</releaseNotes>
+            </metadata>
+            <files>
+              <file src="sfm___VERSION___windows_amd64.zip" target="tools\sfm.zip" />
+              <file src="chocolateyinstall.ps1" target="tools\chocolateyinstall.ps1" />
+            </files>
+          </package>
+          EOF
+          sed -i "s/__VERSION__/${VERSION}/g" sfm.nuspec
+          sed -i "s/sfm___VERSION___/sfm_${VERSION}/g" sfm.nuspec
+
+          cat > chocolateyinstall.ps1 << 'PS1'
+          $ErrorActionPreference = 'Stop'
+          $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
+          $zip = Join-Path $toolsDir 'sfm.zip'
+          $dest = Join-Path $toolsDir 'sfm'
+          Get-ChocolateyUnzip -FileFullPath $zip -Destination $dest
+          Install-ChocolateyPath -PathToJoin $dest
+          PS1
+
+      - name: Build and push to Chocolatey
         uses: docker://chocolatey/choco:latest-linux
         with:
           entrypoint: bash
-          args: -c |
-            cp /github/workspace/sfm_${{ github.ref_name }}_windows_amd64.zip /tmp/
-            cd /tmp
-            cat << 'EOF' > sfm.nuspec
-            <?xml version="1.0" encoding="utf-8"?>
-            <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
-              <metadata>
-                <id>sfm</id>
-                <version>${{ github.ref_name }}</version>
-                <title>SFM - SAP For Me CLI</title>
-                <authors>sapcli</authors>
-                <owners>SAPCLI</owners>
-                <projectUrl>https://github.com/sapcli/sfm</projectUrl>
-                <projectSourceUrl>https://github.com/sapcli/sfm</projectSourceUrl>
-                <docsUrl>https://github.com/sapcli/sfm/blob/main/README.md</docsUrl>
-                <bugTrackerUrl>https://github.com/sapcli/sfm/issues</bugTrackerUrl>
-                <copyright>SAPCLI</copyright>
-                <licenseUrl>https://github.com/sapcli/sfm/blob/main/LICENSE</licenseUrl>
-                <tags>sap cli launchpad users partner</tags>
-                <summary>CLI for managing SAP For Me (SAP launchpad) users and partner users.</summary>
-                <description><![CDATA[
-SAP For Me CLI - Manage SAP launchpad users and partner users.
-Supports user listing, creation, deletion, expiry extension, and search.
-]]></description>
-                <releaseNotes>https://github.com/sapcli/sfm/releases/tag/${{ github.ref_name }}</releaseNotes>
-              </metadata>
-              <files>
-                <file src="sfm_${{ github.ref_name }}_windows_amd64.zip" target="tools\sfm.zip" />
-                <file src="chocolateyinstall.ps1" target="tools\chocolateyinstall.ps1" />
-              </files>
-            </package>
-            EOF
-
-            cat << 'EOF' > chocolateyinstall.ps1
-            $ErrorActionPreference = 'Stop'
-            $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
-            $zip = Join-Path $toolsDir 'sfm.zip'
-            $dest = Join-Path $toolsDir 'sfm'
-            Get-ChocolateyUnzip -FileFullPath $zip -Destination $dest
-            Install-ChocolateyPath -PathToJoin $dest
-            EOF
-
-            choco pack sfm.nuspec
-            choco push sfm.${{ github.ref_name }}.nupkg -s https://push.chocolatey.org/ -k ${{ secrets.CHOCOLATEY_API_KEY }}
+          args: -c "choco pack /github/workspace/sfm.nuspec && choco push /github/workspace/sfm.${{ github.ref_name }}.nupkg -s https://push.chocolatey.org/ -k ${{ secrets.CHOCOLATEY_API_KEY }}"
