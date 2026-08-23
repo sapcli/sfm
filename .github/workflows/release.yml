@@ -100,4 +100,4 @@ jobs:
         uses: docker://chocolatey/choco:latest-linux
         with:
           entrypoint: bash
-          args: -c "choco pack /github/workspace/sfm.nuspec && choco push /github/workspace/sfm.${{ github.ref_name }}.nupkg -s https://push.chocolatey.org/ -k ${{ secrets.CHOCOLATEY_API_KEY }}"
+          args: -c "cd /github/workspace && VERSION=${GITHUB_REF_NAME#v} && choco pack sfm.nuspec && choco push sfm.${VERSION}.nupkg -s https://push.chocolatey.org/ -k ${{ secrets.CHOCOLATEY_API_KEY }}"
