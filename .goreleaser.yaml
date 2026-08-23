@@ -42,6 +42,45 @@ brews:
     license: "MIT"
     install: |
       bin.install "sfm"
+winget:
+  - name: sfm
+    publisher: SAPCLI
+    short_description: "CLI for managing SAP For Me (SAP launchpad) users and partner users."
+    license: MIT
+    homepage: "https://github.com/sapcli/sfm"
+    package_identifier: SAPCLI.sfm
+    repository:
+      owner: sapcli
+      name: winget-pkgs
+      branch: "{{ .ProjectName }}-{{ .Version }}"
+      pull_request:
+        enabled: true
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
+      token: "{{ .Env.WINGET_PAT_TOKEN }}"
+    commit_author:
+      name: goreleaserbot
+      email: bot@sapcli.github.io
+chocolateys:
+  - name: sfm
+    owners: SAPCLI
+    title: SFM - SAP For Me CLI
+    authors: sapcli
+    project_url: "https://github.com/sapcli/sfm"
+    project_source_url: "https://github.com/sapcli/sfm"
+    docs_url: "https://github.com/sapcli/sfm/blob/main/README.md"
+    bug_tracker_url: "https://github.com/sapcli/sfm/issues"
+    copyright: "SAPCLI"
+    license_url: "https://github.com/sapcli/sfm/blob/main/LICENSE"
+    tags: "sap cli launchpad users partner"
+    summary: "CLI for managing SAP For Me (SAP launchpad) users and partner users."
+    description: |
+      SAP For Me CLI - Manage SAP launchpad users and partner users.
+      Supports user listing, creation, deletion, expiry extension, and search.
+    release_notes: "https://github.com/sapcli/sfm/releases/tag/v{{ .Version }}"
+    api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
 changelog:
   sort: asc
   filters:

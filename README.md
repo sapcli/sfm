@@ -4,11 +4,32 @@ CLI for managing SAP For Me (SAP launchpad) users and partner users.
 
 ## Installation
 
+### Homebrew (macOS / Linux)
+
+```bash
+brew tap sapcli/tap https://github.com/sapcli/homebrew-tap.git
+brew install sapcli/tap/sfm --formula
+```
+
+### Winget (Windows)
+
+```bash
+winget install SAPCLI.sfm
+```
+
+### Chocolatey (Windows)
+
+```bash
+choco install sfm
+```
+
+### Go
+
 ```bash
 go install github.com/sapcli/sfm/cmd/sfm@latest
 ```
 
-Or build from source:
+### Build from source
 
 ```bash
 git clone https://github.com/sapcli/sfm.git
