@@ -278,9 +278,7 @@ func structToMap(v any) map[string]any {
 			if tag == "-" {
 				continue
 			}
-			if idx := strings.Index(tag, ","); idx != -1 {
-				tag = tag[:idx]
-			}
+			tag, _, _ = strings.Cut(tag, ",")
 			name = tag
 		}
 		m[name] = rv.Field(i).Interface()
@@ -314,9 +312,7 @@ func structFieldNames(v any) []string {
 			if tag == "-" {
 				continue
 			}
-			if idx := strings.Index(tag, ","); idx != -1 {
-				tag = tag[:idx]
-			}
+			tag, _, _ = strings.Cut(tag, ",")
 			if tag != "" {
 				name = tag
 			}
